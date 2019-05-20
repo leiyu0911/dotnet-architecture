@@ -59,15 +59,15 @@ END
 app_name='eshop'
 aks_name=''
 aks_rg=''
-build_images='yes'
+build_images='no'
 clean='yes'
 build_solution=''
 container_registry=''
 docker_password=''
 docker_username=''
 dns=''
-image_tag=$(date '+%Y%m%d%H%M')
-push_images='yes'
+image_tag='latest'
+push_images='no'
 skip_infrastructure=''
 use_local_k8s=''
 
@@ -158,7 +158,7 @@ if [[ $dns == "aks" ]]; then
     echo "Error: when getting DNS of AKS $aks_name (in resource group $aks_rg). Please ensure AKS has httpRouting enabled AND Azure CLI is logged in and is of version 2.0.37 or higher."
     exit 1
   fi
-  $dns=${dns//[\"]/""}
+  dns=${dns//[\"]/""}
   echo "DNS base found is $dns. Will use $aks_name.$dns for the app!"
 fi
 
@@ -191,7 +191,7 @@ if [[ !$skip_infrastructure ]]; then
   for infra in "${infras[@]}"
   do
     echo "Installing infrastructure: $infra"
-    helm install --values app.yaml --values inf.yaml --values $ingress_values_file --set app.name=$app_name --set inf.k8s.dns=$dns --name="$app_name-$infra" $infra     
+    helm install --namespace eshop --values app.yaml --values inf.yaml --values $ingress_values_file --set app.name=$app_name --set inf.k8s.dns=$dns --set ingress.hosts[0]=$dns --name="$app_name-$infra" $infra     
   done  
 fi
 
@@ -199,9 +199,9 @@ for chart in "${charts[@]}"
 do
     echo "Installing: $chart"
     if [[ $use_custom_registry ]]; then 
-      helm install --set inf.registry.server=$container_registry --set inf.registry.login=$docker_username --set inf.registry.pwd=$docker_password --set inf.registry.secretName=eshop-docker-scret --values app.yaml --values inf.yaml --values $ingress_values_file --set app.name=$app_name --set inf.k8s.dns=$dns --set image.tag=$image_tag --set image.pullPolicy=Always --name="$app_name-$chart" $chart 
+      helm install --namespace eshop --set inf.registry.server=$container_registry --set inf.registry.login=$docker_username --set inf.registry.pwd=$docker_password --set inf.registry.secretName=eshop-docker-scret --values app.yaml --values inf.yaml --values $ingress_values_file --set app.name=$app_name --set inf.k8s.dns=$dns --set ingress.hosts[0]=$dns --set image.tag=$image_tag --set image.pullPolicy=Always --name="$app_name-$chart" $chart 
     elif [[ $chart != "eshop-common" ]]; then  # eshop-common is ignored when no secret must be deployed
-      helm install --values app.yaml --values inf.yaml --values $ingress_values_file --set app.name=$app_name --set inf.k8s.dns=$dns --set image.tag=$image_tag --set image.pullPolicy=Always --name="$app_name-$chart" $chart 
+      helm install --namespace eshop --values app.yaml --values inf.yaml --values $ingress_values_file --set app.name=$app_name --set inf.k8s.dns=$dns --set ingress.hosts[0]=$dns --set image.tag=$image_tag --set image.pullPolicy=Always --name="$app_name-$chart" $chart 
     fi
 done
 

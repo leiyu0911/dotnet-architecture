@@ -3,8 +3,8 @@ clusterName: eshop-aks
 pathBase: /
 
 image:
-  repository: eshop/webspa
-  tag: latest
+  repository: rexlei/webspa
+  tag: linux-latest
   pullPolicy: IfNotPresent
 
 service:

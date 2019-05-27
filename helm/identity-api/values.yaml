@@ -3,8 +3,8 @@ clusterName: eshop-aks
 pathBase: /identity
 
 image:
-  repository: eshop/identity.api
-  tag: latest
+  repository: rexlei/identity.api
+  tag: linux-latest
   pullPolicy: IfNotPresent
 
 service:

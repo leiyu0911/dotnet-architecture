@@ -1,0 +1,238 @@
+version: '3.4'
+
+services:
+
+  seq:
+    image: datalust/seq:latest
+
+  sql.data:
+    image: microsoft/mssql-server-linux:2017-latest
+
+  nosql.data:
+    image: mongo
+
+  basket.data:
+    image: redis:alpine
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+
+  identity.api:
+    image: ${REGISTRY:-rexlei}/identity.api:${PLATFORM:-linux}-${TAG:-5.20.01}
+    build:
+      context: .
+      dockerfile: src/Services/Identity/Identity.API/Dockerfile    
+    depends_on:
+      - sql.data
+
+  basket.api:
+    image: ${REGISTRY:-rexlei}/basket.api:${PLATFORM:-linux}-${TAG:-5.20.01}
+    build:
+      context: .
+      dockerfile: src/Services/Basket/Basket.API/Dockerfile    
+    depends_on:
+      - basket.data
+      - identity.api
+      - rabbitmq
+
+  catalog.api:
+    image: ${REGISTRY:-rexlei}/catalog.api:${PLATFORM:-linux}-${TAG:-5.20.01}
+    build:
+      context: .
+      dockerfile: src/Services/Catalog/Catalog.API/Dockerfile
+    depends_on:
+      - sql.data
+      - rabbitmq
+
+  ordering.api:
+    image: ${REGISTRY:-rexlei}/ordering.api:${PLATFORM:-linux}-${TAG:-5.20.01}
+    build:
+      context: .
+      dockerfile: src/Services/Ordering/Ordering.API/Dockerfile    
+    depends_on:
+      - sql.data
+      - rabbitmq
+
+  ordering.backgroundtasks:
+    image: ${REGISTRY:-rexlei}/ordering.backgroundtasks:${PLATFORM:-linux}-${TAG:-5.20.01}
+    build:
+      context: .
+      dockerfile: src/Services/Ordering/Ordering.BackgroundTasks/Dockerfile    
+    depends_on:
+      - sql.data
+      - rabbitmq
+
+  marketing.api:
+    image: ${REGISTRY:-rexlei}/marketing.api:${PLATFORM:-linux}-${TAG:-5.20.01}
+    build:
+      context: .
+      dockerfile: src/Services/Marketing/Marketing.API/Dockerfile    
+    depends_on:
+      - sql.data
+      - nosql.data
+      - identity.api
+      - rabbitmq
+
+  payment.api:
+    image: ${REGISTRY:-rexlei}/payment.api:${PLATFORM:-linux}-${TAG:-5.20.01}
+    build:
+      context: .
+      dockerfile: src/Services/Payment/Payment.API/Dockerfile
+    depends_on:
+      - rabbitmq    
+
+  locations.api:
+    image: ${REGISTRY:-rexlei}/locations.api:${PLATFORM:-linux}-${TAG:-5.20.01}
+    build:
+      context: .
+      dockerfile: src/Services/Location/Locations.API/Dockerfile
+    depends_on:
+      - nosql.data
+      - rabbitmq
+
+  webhooks.api:
+    image: ${REGISTRY:-rexlei}/webhooks.api:${PLATFORM:-linux}-${TAG:-5.20.01}
+    build:
+      context: .
+      dockerfile: src/Services/Webhooks/Webhooks.API/Dockerfile
+    depends_on:
+      - sql.data    
+
+  mobileshoppingapigw:
+    image: ${REGISTRY:-rexlei}/ocelotapigw:${PLATFORM:-linux}-${TAG:-5.20.01}
+    build:
+      context: .
+      dockerfile: src/ApiGateways/ApiGw-Base/Dockerfile
+    depends_on:
+      - nosql.data
+      - sql.data
+      - identity.api
+      - rabbitmq
+      - ordering.api
+      - marketing.api
+      - catalog.api
+      - basket.api
+
+  mobilemarketingapigw:
+    image: ${REGISTRY:-rexlei}/ocelotapigw:${PLATFORM:-linux}-${TAG:-5.20.01}
+    build:
+      context: .
+      dockerfile: src/ApiGateways/ApiGw-Base/Dockerfile
+    depends_on:
+      - nosql.data
+      - sql.data
+      - identity.api
+      - rabbitmq
+      - ordering.api
+      - marketing.api
+      - catalog.api
+      - basket.api
+
+  webshoppingapigw:
+    image: ${REGISTRY:-rexlei}/ocelotapigw:${PLATFORM:-linux}-${TAG:-5.20.01}
+    build:
+      context: .
+      dockerfile: src/ApiGateways/ApiGw-Base/Dockerfile
+    depends_on:
+      - nosql.data
+      - sql.data
+      - identity.api
+      - rabbitmq
+      - ordering.api
+      - marketing.api
+      - catalog.api
+      - basket.api
+
+  webmarketingapigw:
+    image: ${REGISTRY:-rexlei}/ocelotapigw:${PLATFORM:-linux}-${TAG:-5.20.01}
+    build:
+      context: .
+      dockerfile: src/ApiGateways/ApiGw-Base/Dockerfile
+    depends_on:
+      - nosql.data
+      - sql.data
+      - identity.api
+      - rabbitmq
+      - ordering.api
+      - marketing.api
+      - catalog.api
+      - basket.api
+
+  mobileshoppingagg:
+    image: ${REGISTRY:-rexlei}/mobileshoppingagg:${PLATFORM:-linux}-${TAG:-5.20.01}
+    build:
+      context: .
+      dockerfile: src/ApiGateways/Mobile.Bff.Shopping/aggregator/Dockerfile
+    depends_on:
+      - nosql.data
+      - sql.data
+      - identity.api
+      - rabbitmq
+      - ordering.api
+      - marketing.api
+      - catalog.api
+      - basket.api
+
+  webshoppingagg:
+    image: ${REGISTRY:-rexlei}/webshoppingagg:${PLATFORM:-linux}-${TAG:-5.20.01}
+    build:
+      context: .
+      dockerfile: src/ApiGateways/Web.Bff.Shopping/aggregator/Dockerfile
+    depends_on:
+      - nosql.data
+      - sql.data
+      - identity.api
+      - rabbitmq
+      - ordering.api
+      - marketing.api
+      - catalog.api
+      - basket.api
+
+  ordering.signalrhub:
+    image: ${REGISTRY:-rexlei}/ordering.signalrhub:${PLATFORM:-linux}-${TAG:-5.20.01}
+    build:
+      context: .
+      dockerfile: src/Services/Ordering/Ordering.SignalrHub/Dockerfile
+    depends_on:
+      - nosql.data
+      - sql.data
+      - identity.api
+      - rabbitmq
+      - ordering.api
+      - marketing.api
+      - catalog.api
+      - basket.api
+
+  webstatus:
+    image: ${REGISTRY:-rexlei}/webstatus:${PLATFORM:-linux}-${TAG:-5.20.01}
+    build:
+      context: .
+      dockerfile: src/Web/WebStatus/Dockerfile
+
+  webspa:
+    image: ${REGISTRY:-rexlei}/webspa:${PLATFORM:-linux}-${TAG:-5.20.01}
+    build:
+      context: .
+      dockerfile: src/Web/WebSPA/Dockerfile    
+#    depends_on:
+#      - webshoppingagg
+#      - webshoppingapigw
+#      - webmarketingapigw
+
+  webmvc:
+    image: ${REGISTRY:-rexlei}/webmvc:${PLATFORM:-linux}-${TAG:-5.20.01}
+    build:
+      context: .
+      dockerfile: src/Web/WebMVC/Dockerfile    
+    depends_on:
+      - webshoppingagg
+      - webshoppingapigw
+      - webmarketingapigw
+
+  webhooks.client:
+    image: ${REGISTRY:-rexlei}/webhooks.client:${PLATFORM:-linux}-${TAG:-5.20.01}
+    build:
+      context: .
+      dockerfile: src/Web/WebhookClient/Dockerfile
+    depends_on:
+      - webhooks.api      

@@ -3,8 +3,8 @@ clusterName: eshop-aks
 pathBase: /locations-api
 
 image:
-  repository: eshop/locations.api
-  tag: latest
+  repository: rexlei/locations.api
+  tag: linux-latest
   pullPolicy: IfNotPresent
 
 service:
